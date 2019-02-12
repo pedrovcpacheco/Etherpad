@@ -1,0 +1,76 @@
+version: '3.3'
+
+services:
+   db:
+     image: mysql 
+     deploy:	
+       placement:
+        constraints: [node.role == manager]
+       resources:
+        limits:
+          cpus: "2"
+          memory: 2000M
+       restart_policy:
+        condition: any 
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+     ports:
+       - "3306:3306"
+     secrets:
+       - db_pass
+     environment:
+       MYSQL_ROOT_PASSWORD_FILE: "/run/secrets/db_pass"
+       MYSQL_DATABASE: etherpad
+       #MYSQL_USER: XX
+       #MYSQL_PASSWORD: XX
+     volumes:
+       - db_data:/var/lib/mysql	
+
+   web:
+    image:  users2010/etherpad:1.0.0
+    configs:
+      - source: etherpad
+        target: /opt/etherpad/etherpad-lite/settings.json
+    deploy:
+      placement:
+       constraints: [node.role == manager]
+      replicas: 1 
+      update_config:
+         parallelism: 2
+         delay: 10s
+      resources:
+        limits:
+          cpus: "3"
+          memory: 6000M
+      restart_policy:
+       condition: any 
+       delay: 10s
+       max_attempts: 3
+       window: 120s
+    ports:
+      - "9001:9001"
+    volumes:
+      - var:/opt/etherpad/etherpad-lite/var
+    
+   visualizer:
+    image: dockersamples/visualizer
+    ports:
+      - "8080:8080"
+    stop_grace_period: 1m30s
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+volumes:
+  var:
+  db_data:
+secrets:
+  db_pass:
+    external: true
+configs:
+  etherpad:
+    external: true
+
