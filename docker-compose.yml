@@ -22,8 +22,6 @@ services:
      environment:
        MYSQL_ROOT_PASSWORD_FILE: "/run/secrets/db_pass"
        MYSQL_DATABASE: etherpad
-       #MYSQL_USER: XX
-       #MYSQL_PASSWORD: XX
      volumes:
        - db_data:/var/lib/mysql	
 
